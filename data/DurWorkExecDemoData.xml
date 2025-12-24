@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<entity-facade-xml type="demo">
+    
+    <!-- Mobile Units -->
+    <durion.workexec.DurMobileUnit mobileUnitId="MU001" unitNumber="UNIT-101" description="Standard Service Van" 
+        vehicleVin="1FTEW1EP7JFA12345" licensePlate="SVC-101" unitType="STANDARD"
+        capacity="Standard roadside service with tire, battery, fuel delivery" 
+        equipment="Tire changing tools, battery jump kit, fuel cans, basic hand tools"
+        currentMechanicId="MECH001" statusId="MU_AVAILABLE" homeLocationId="LOC001"
+        currentLatitude="40.7580" currentLongitude="-111.8910" lastLocationUpdate="2024-12-27 08:30:00"
+        mileage="45230" lastServiceDate="2024-12-01"/>
+
+    <durion.workexec.DurMobileUnit mobileUnitId="MU002" unitNumber="UNIT-201" description="Heavy Duty Tow Truck" 
+        vehicleVin="1FDUF5HT9GEA56789" licensePlate="TOW-201" unitType="TOW_TRUCK"
+        capacity="Heavy duty towing up to 15,000 lbs" 
+        equipment="Wheel lift, flatbed, winch, dollies, safety equipment"
+        statusId="MU_AVAILABLE" homeLocationId="LOC001"
+        currentLatitude="40.7650" currentLongitude="-111.8800" lastLocationUpdate="2024-12-27 08:45:00"
+        mileage="82450" lastServiceDate="2024-11-15"/>
+
+    <durion.workexec.DurMobileUnit mobileUnitId="MU003" unitNumber="UNIT-301" description="Tire Service Van" 
+        vehicleVin="1FTFW1EF2DFA98765" licensePlate="TIRE-301" unitType="TIRE_SERVICE"
+        capacity="On-site tire service, mounting, balancing" 
+        equipment="Portable tire changer, balancer, tire inventory, air tools"
+        currentMechanicId="MECH002" statusId="MU_DISPATCHED" homeLocationId="LOC001"
+        currentLatitude="40.7200" currentLongitude="-111.9000" lastLocationUpdate="2024-12-27 09:15:00"
+        mileage="38920" lastServiceDate="2024-12-10"/>
+
+    <!-- Estimates -->
+    <durion.workexec.DurEstimate estimateId="EST001" estimateNumber="EST-001" customerId="CUST001" vehicleId="VEH001"
+        estimateDate="2024-12-26 14:30:00" expirationDate="2025-01-25"
+        description="Brake system inspection and replacement estimate"
+        laborAmount="180.00" partsAmount="285.00" taxAmount="37.20" totalAmount="502.20"
+        statusId="EST_APPROVED" approvedDate="2024-12-26 16:00:00" approvedBy="CUST001"/>
+
+    <durion.workexec.DurEstimateItem estimateItemId="ESTI001" estimateId="EST001" itemSeqId="001"
+        itemType="LABOR" operationId="OP002" description="Front brake pad replacement - labor"
+        quantity="1.5" unitPrice="120.00" lineTotal="180.00" taxable="Y"/>
+
+    <durion.workexec.DurEstimateItem estimateItemId="ESTI002" estimateId="EST001" itemSeqId="002"
+        itemType="PART" productId="PROD002" description="Premium ceramic brake pads - front set"
+        quantity="1" unitPrice="149.99" lineTotal="149.99" taxable="Y"/>
+
+    <durion.workexec.DurEstimateItem estimateItemId="ESTI003" estimateId="EST001" itemSeqId="003"
+        itemType="PART" productId="PROD003" description="Brake rotor set - front"
+        quantity="1" unitPrice="135.00" lineTotal="135.00" taxable="Y"/>
+
+    <durion.workexec.DurEstimate estimateId="EST002" estimateNumber="EST-002" customerId="CUST002" vehicleId="VEH002"
+        estimateDate="2024-12-27 09:00:00" expirationDate="2025-01-26"
+        description="Engine diagnostic and tune-up estimate"
+        laborAmount="240.00" partsAmount="165.00" taxAmount="32.40" totalAmount="437.40"
+        statusId="EST_SENT"/>
+
+    <durion.workexec.DurEstimateItem estimateItemId="ESTI004" estimateId="EST002" itemSeqId="001"
+        itemType="LABOR" operationId="OP004" description="Complete diagnostic scan and analysis"
+        quantity="1.0" unitPrice="120.00" lineTotal="120.00" taxable="Y"/>
+
+    <durion.workexec.DurEstimateItem estimateItemId="ESTI005" estimateId="EST002" itemSeqId="002"
+        itemType="LABOR" operationId="OP001" description="Tune-up service - spark plugs, filters"
+        quantity="1.0" unitPrice="120.00" lineTotal="120.00" taxable="Y"/>
+
+    <durion.workexec.DurEstimateItem estimateItemId="ESTI006" estimateId="EST002" itemSeqId="003"
+        itemType="PART" productId="PROD003" description="Air filter replacement"
+        quantity="1" unitPrice="45.00" lineTotal="45.00" taxable="Y"/>
+
+    <durion.workexec.DurEstimateItem estimateItemId="ESTI007" estimateId="EST002" itemSeqId="004"
+        itemType="PART" description="Spark plug set (8 plugs)"
+        quantity="1" unitPrice="120.00" lineTotal="120.00" taxable="Y"/>
+
+    <!-- Work Orders -->
+    <durion.workexec.DurWorkOrder workOrderId="WO001" workOrderNumber="WO-001" customerId="CUST001" vehicleId="VEH001"
+        estimateId="EST001" appointmentId="APPT001"
+        orderDate="2024-12-27 08:00:00" promisedDate="2024-12-27 14:00:00"
+        mechanicId="MECH001" bayId="BAY001" workOrderType="SHOP" priority="NORMAL" statusId="WO_IN_PROGRESS"
+        customerComplaint="Squealing noise when braking, brake pedal feels soft"
+        technicianNotes="Confirmed worn front brake pads and slight rotor scoring. Proceeding with pad and rotor replacement per approved estimate."
+        mileageIn="45230" totalLabor="180.00" totalParts="285.00" totalTax="37.20" totalAmount="502.20"
+        createdDate="2024-12-26 16:30:00"/>
+
+    <durion.workexec.DurWorkOrderItem workOrderItemId="WOI001" workOrderId="WO001" itemSeqId="001"
+        itemType="LABOR" operationId="OP002" description="Front brake pad replacement - labor"
+        quantity="1.5" unitPrice="120.00" lineTotal="180.00" taxable="Y" mechanicId="MECH001"
+        hoursWorked="1.2" statusId="ITEM_COMPLETED"/>
+
+    <durion.workexec.DurWorkOrderItem workOrderItemId="WOI002" workOrderId="WO001" itemSeqId="002"
+        itemType="PART" productId="PROD002" description="Premium ceramic brake pads - front set"
+        quantity="1" unitPrice="149.99" lineTotal="149.99" taxable="Y" statusId="ITEM_COMPLETED"/>
+
+    <durion.workexec.DurWorkOrderItem workOrderItemId="WOI003" workOrderId="WO001" itemSeqId="003"
+        itemType="PART" productId="PROD003" description="Brake rotor set - front"
+        quantity="1" unitPrice="135.00" lineTotal="135.00" taxable="Y" statusId="ITEM_COMPLETED"/>
+
+    <durion.workexec.DurWorkOrder workOrderId="WO002" workOrderNumber="WO-002" customerId="CUST003" vehicleId="VEH003"
+        orderDate="2024-12-27 07:30:00" promisedDate="2024-12-27 10:30:00"
+        mechanicId="MECH003" bayId="BAY002" workOrderType="SHOP" priority="NORMAL" statusId="WO_SCHEDULED"
+        customerComplaint="Need standard oil change and tire rotation"
+        mileageIn="28450" totalLabor="60.00" totalParts="55.00" totalTax="9.20" totalAmount="124.20"
+        createdDate="2024-12-27 07:30:00"/>
+
+    <durion.workexec.DurWorkOrderItem workOrderItemId="WOI004" workOrderId="WO002" itemSeqId="001"
+        itemType="SERVICE" operationId="OP001" description="Oil change service - conventional oil"
+        quantity="1" unitPrice="45.00" lineTotal="45.00" taxable="Y" statusId="ITEM_PENDING"/>
+
+    <durion.workexec.DurWorkOrderItem workOrderItemId="WOI005" workOrderId="WO002" itemSeqId="002"
+        itemType="LABOR" operationId="OP003" description="Tire rotation and balance"
+        quantity="1" unitPrice="15.00" lineTotal="15.00" taxable="Y" statusId="ITEM_PENDING"/>
+
+    <durion.workexec.DurWorkOrderItem workOrderItemId="WOI006" workOrderId="WO002" itemSeqId="003"
+        itemType="PART" productId="PROD001" description="Synthetic blend motor oil (5 qts)"
+        quantity="1" unitPrice="45.00" lineTotal="45.00" taxable="Y" statusId="ITEM_PENDING"/>
+
+    <durion.workexec.DurWorkOrderItem workOrderItemId="WOI007" workOrderId="WO002" itemSeqId="004"
+        itemType="PART" productId="PROD003" description="Oil filter"
+        quantity="1" unitPrice="10.00" lineTotal="10.00" taxable="Y" statusId="ITEM_PENDING"/>
+
+    <!-- Roadside Work Order -->
+    <durion.workexec.DurWorkOrder workOrderId="WO003" workOrderNumber="WO-003" customerId="CUST004" vehicleId="VEH004"
+        orderDate="2024-12-27 09:00:00" mobileUnitId="MU003" mechanicId="MECH002"
+        workOrderType="ROADSIDE" priority="URGENT" statusId="WO_IN_PROGRESS"
+        customerComplaint="Flat tire on I-15 northbound, mile marker 312"
+        technicianNotes="Responded to scene at 09:15. Tire damaged beyond repair. Installing spare tire."
+        totalLabor="80.00" totalParts="0.00" totalTax="6.40" totalAmount="86.40"
+        createdDate="2024-12-27 09:00:00"/>
+
+    <durion.workexec.DurWorkOrderItem workOrderItemId="WOI008" workOrderId="WO003" itemSeqId="001"
+        itemType="SERVICE" description="Emergency roadside tire change service"
+        quantity="1" unitPrice="80.00" lineTotal="80.00" taxable="Y" mechanicId="MECH002"
+        statusId="ITEM_COMPLETED"/>
+
+    <!-- Completed Work Order with Invoice -->
+    <durion.workexec.DurWorkOrder workOrderId="WO004" workOrderNumber="WO-004" customerId="CUST002" vehicleId="VEH002"
+        orderDate="2024-12-25 10:00:00" promisedDate="2024-12-25 15:00:00"
+        actualCompletionDate="2024-12-25 14:30:00"
+        mechanicId="MECH001" bayId="BAY001" workOrderType="SHOP" priority="HIGH" statusId="WO_INVOICED"
+        customerComplaint="Check engine light on, rough idle"
+        technicianNotes="Diagnosed faulty ignition coil and spark plug misfires. Replaced all components. Test drive successful, no codes."
+        mileageIn="52100" mileageOut="52105"
+        totalLabor="200.00" totalParts="345.00" totalTax="43.60" totalAmount="588.60"
+        createdDate="2024-12-25 10:00:00"/>
+
+    <durion.workexec.DurWorkOrderItem workOrderItemId="WOI009" workOrderId="WO004" itemSeqId="001"
+        itemType="LABOR" operationId="OP004" description="Engine diagnostic and testing"
+        quantity="1.5" unitPrice="120.00" lineTotal="180.00" taxable="Y" mechanicId="MECH001"
+        hoursWorked="1.5" statusId="ITEM_COMPLETED"/>
+
+    <durion.workexec.DurWorkOrderItem workOrderItemId="WOI010" workOrderId="WO004" itemSeqId="002"
+        itemType="LABOR" description="Ignition coil and spark plug replacement"
+        quantity="0.5" unitPrice="40.00" lineTotal="20.00" taxable="Y" mechanicId="MECH001"
+        hoursWorked="0.5" statusId="ITEM_COMPLETED"/>
+
+    <durion.workexec.DurWorkOrderItem workOrderItemId="WOI011" workOrderId="WO004" itemSeqId="003"
+        itemType="PART" description="Ignition coil pack (2 units)"
+        quantity="2" unitPrice="135.00" lineTotal="270.00" taxable="Y" statusId="ITEM_COMPLETED"/>
+
+    <durion.workexec.DurWorkOrderItem workOrderItemId="WOI012" workOrderId="WO004" itemSeqId="004"
+        itemType="PART" description="Premium iridium spark plugs (4 units)"
+        quantity="4" unitPrice="18.75" lineTotal="75.00" taxable="Y" statusId="ITEM_COMPLETED"/>
+
+    <!-- Invoices -->
+    <durion.workexec.DurInvoice invoiceId="INV001" invoiceNumber="INV-001" workOrderId="WO004" customerId="CUST002"
+        invoiceDate="2024-12-25 15:00:00" dueDate="2025-01-24"
+        subtotal="545.00" taxAmount="43.60" totalAmount="588.60" amountPaid="0.00" balanceDue="588.60"
+        statusId="INV_SENT" paymentTerms="NET30"
+        notes="Thank you for your business. Payment due within 30 days."
+        createdDate="2024-12-25 15:00:00"/>
+
+    <!-- Warranty Cases -->
+    <durion.workexec.DurWarrantyCase warrantyCaseId="WC001" caseNumber="WC-001" customerId="CUST001" vehicleId="VEH001"
+        originalWorkOrderId="WO004" claimDate="2024-12-27 10:00:00"
+        warrantyType="SHOP" description="Customer returned with same ignition coil failure within 7 days"
+        failureDescription="Driver side ignition coil failed again. Testing shows defective part."
+        claimAmount="135.00" approvedAmount="135.00" statusId="WC_APPROVED"
+        submittedDate="2024-12-27 10:00:00" approvedDate="2024-12-27 10:30:00"
+        notes="Approved replacement under shop 90-day parts warranty. No labor charge as within 7 days."/>
+
+    <durion.workexec.DurWarrantyCase warrantyCaseId="WC002" caseNumber="WC-002" customerId="CUST003" vehicleId="VEH003"
+        claimDate="2024-12-20 14:00:00" warrantyType="MANUFACTURER" warrantyProvider="Ford Motor Company"
+        providerClaimNumber="FMC-2024-789456"
+        description="Transmission failure covered under powertrain warranty"
+        failureDescription="Transmission slipping and harsh shifting. Diagnosed as internal clutch pack failure."
+        claimAmount="3200.00" approvedAmount="3200.00" statusId="WC_PAID"
+        submittedDate="2024-12-20 14:00:00" approvedDate="2024-12-21 09:00:00" paidDate="2024-12-26 10:00:00"
+        notes="Manufacturer approved full transmission replacement. Payment received."/>
+
+    <durion.workexec.DurWarrantyCase warrantyCaseId="WC003" caseNumber="WC-003" customerId="CUST004" vehicleId="VEH004"
+        claimDate="2024-12-22 11:00:00" warrantyType="EXTENDED" warrantyProvider="Premium Auto Protection"
+        providerClaimNumber="PAP-2024-556677"
+        description="Air conditioning compressor failure"
+        failureDescription="AC compressor seized. No cold air output."
+        claimAmount="850.00" statusId="WC_PENDING"
+        submittedDate="2024-12-22 11:00:00"
+        notes="Awaiting approval from extended warranty provider. Customer notified of potential out-of-pocket expense if denied."/>
+
+    <!-- Delivery Receipts -->
+    <durion.workexec.DurDeliveryReceipt deliveryReceiptId="DR001" receiptNumber="DR-001" workOrderId="WO004"
+        receiptType="VEHICLE_DELIVERY" receiptDate="2024-12-25 14:45:00"
+        receivedBy="CUST002" deliveredBy="MECH001" vehicleCondition="EXCELLENT"
+        mileage="52105" fuelLevel="3/4" customerSignature="[Digital Signature Data]"
+        signatureDate="2024-12-25 14:45:00"
+        notes="Vehicle thoroughly cleaned and test driven. Customer satisfied with repair."/>
+
+    <durion.workexec.DurDeliveryReceipt deliveryReceiptId="DR002" receiptNumber="DR-002" workOrderId="WO003"
+        receiptType="VEHICLE_DELIVERY" receiptDate="2024-12-27 09:30:00"
+        receivedBy="CUST004" deliveredBy="MECH002" vehicleCondition="GOOD"
+        fuelLevel="1/2" customerSignature="[Digital Signature Data]"
+        signatureDate="2024-12-27 09:30:00"
+        notes="Roadside service completed. Spare tire installed. Customer advised to replace damaged tire ASAP."/>
+
+</entity-facade-xml>

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<entities xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/entity-definition-3.xsd">
+
+    <entity entity-name="DurEstimate" package-name="durion.workexec" table-name="DUR_ESTIMATE">
+        <description>Repair estimate/quote for customer approval</description>
+        <field name="estimateId" type="id" is-pk="true"/>
+        <field name="estimateNumber" type="text-short">
+            <description>Human-readable estimate number</description>
+        </field>
+        <field name="customerId" type="id" required="true"/>
+        <field name="vehicleId" type="id" required="true"/>
+        <field name="estimateDate" type="date-time" default="ec.user.nowTimestamp"/>
+        <field name="expirationDate" type="date-time">
+            <description>Date estimate expires</description>
+        </field>
+        <field name="description" type="text-long">
+            <description>Overall description of work to be performed</description>
+        </field>
+        <field name="laborAmount" type="currency-amount"/>
+        <field name="partsAmount" type="currency-amount"/>
+        <field name="taxAmount" type="currency-amount"/>
+        <field name="totalAmount" type="currency-amount"/>
+        <field name="statusId" type="text-short" default="EST_DRAFT">
+            <description>EST_DRAFT, EST_SENT, EST_APPROVED, EST_DECLINED, EST_EXPIRED</description>
+        </field>
+        <field name="approvedDate" type="date-time"/>
+        <field name="approvedBy" type="id">
+            <description>Person who approved estimate</description>
+        </field>
+        <field name="workOrderId" type="id">
+            <description>Link to work order if estimate was converted</description>
+        </field>
+        <field name="notes" type="text-long"/>
+        <field name="createdDate" type="date-time" default="ec.user.nowTimestamp"/>
+        <field name="updatedDate" type="date-time" update="ec.user.nowTimestamp"/>
+    </entity>
+
+    <entity entity-name="DurEstimateItem" package-name="durion.workexec" table-name="DUR_ESTIMATE_ITEM">
+        <description>Line items on estimate</description>
+        <field name="estimateItemId" type="id" is-pk="true"/>
+        <field name="estimateId" type="id" required="true"/>
+        <field name="itemSeqId" type="id" required="true"/>
+        <field name="itemType" type="text-short" required="true">
+            <description>PART, LABOR, SERVICE, SUBLET</description>
+        </field>
+        <field name="productId" type="id"/>
+        <field name="operationId" type="id"/>
+        <field name="description" type="text-medium" required="true"/>
+        <field name="quantity" type="number-decimal" default="1"/>
+        <field name="unitPrice" type="currency-amount" required="true"/>
+        <field name="lineTotal" type="currency-amount"/>
+        <field name="taxable" type="text-indicator" default="Y"/>
+        <field name="notes" type="text-short"/>
+        <relationship type="one" related-entity-name="DurEstimate" short-alias="estimate">
+            <key-map field-name="estimateId" related-field-name="estimateId"/>
+        </relationship>
+    </entity>
+
+</entities>

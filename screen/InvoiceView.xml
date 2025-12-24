@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<screen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-3.xsd"
+        default-menu-title="Invoice" default-menu-index="5">
+
+    <parameter name="invoiceId" required="true"/>
+
+    <transition name="updateInvoice">
+        <service-call name="update#durion.workexec.DurInvoice"/>
+        <default-response url="."/>
+    </transition>
+
+    <actions>
+        <entity-find-one entity-name="durion.workexec.DurInvoice" value-field="invoice"/>
+        <entity-find-one entity-name="durion.workexec.DurWorkOrder" value-field="workOrder">
+            <field-map field-name="workOrderId" from="invoice.workOrderId"/>
+        </entity-find-one>
+        <entity-find entity-name="durion.workexec.DurWorkOrderItem" list="workOrderItems">
+            <econdition field-name="workOrderId" from="invoice.workOrderId"/>
+            <order-by field-name="itemSeqId"/>
+        </entity-find>
+    </actions>
+
+    <widgets>
+        <container-row>
+            <row-col lg="8">
+                <container-box>
+                    <box-header title="Invoice ${invoice.invoiceNumber}"/>
+                    <box-body>
+                        <container style="padding: 20px;">
+                            <container-row>
+                                <row-col lg="6">
+                                    <label text="Customer Information" type="h5"/>
+                                    <render-mode>
+                                        <text type="html" location="component://durion-workexec/template/InvoiceCustomerInfo.html.ftl"/>
+                                    </render-mode>
+                                </row-col>
+                                <row-col lg="6">
+                                    <label text="Invoice Details" type="h5"/>
+                                    <label text="Invoice #: ${invoice.invoiceNumber}"/>
+                                    <label text="Invoice Date: ${ec.l10n.format(invoice.invoiceDate, 'yyyy-MM-dd')}"/>
+                                    <label text="Due Date: ${ec.l10n.format(invoice.dueDate, 'yyyy-MM-dd')}"/>
+                                    <label text="Payment Terms: ${invoice.paymentTerms}"/>
+                                    <label text="Status: ${invoice.statusId}"/>
+                                </row-col>
+                            </container-row>
+
+                            <label text="Work Performed" type="h5" style="margin-top: 20px;"/>
+                            <form-list name="InvoiceItemsList" list="workOrderItems" skip-form="true">
+                                <field name="itemSeqId"><default-field title="Line"><display/></default-field></field>
+                                <field name="itemType"><default-field title="Type"><display/></default-field></field>
+                                <field name="description"><default-field><display/></default-field></field>
+                                <field name="quantity"><default-field><display format="#,##0.00"/></default-field></field>
+                                <field name="unitPrice"><default-field title="Price"><display format="$#,##0.00"/></default-field></field>
+                                <field name="lineTotal"><default-field title="Total"><display format="$#,##0.00"/></default-field></field>
+                            </form-list>
+
+                            <container style="margin-top: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 5px; text-align: right;">
+                                <label text="Subtotal: $${ec.l10n.format(invoice.subtotal, '#,##0.00')}" style="font-size: 1.1em;"/>
+                                <label text="Tax: $${ec.l10n.format(invoice.taxAmount, '#,##0.00')}" style="font-size: 1.1em;"/>
+                                <label text="Total Amount: $${ec.l10n.format(invoice.totalAmount, '#,##0.00')}" 
+                                       style="font-size: 1.3em; font-weight: bold; color: #28a745;"/>
+                                <label text="Amount Paid: $${ec.l10n.format(invoice.amountPaid, '#,##0.00')}" style="font-size: 1.1em;"/>
+                                <label text="Balance Due: $${ec.l10n.format(invoice.balanceDue, '#,##0.00')}" 
+                                       style="font-size: 1.2em; font-weight: bold; color: #dc3545;"/>
+                            </container>
+
+                            <container style="margin-top: 20px;">
+                                <label text="Notes:" type="strong"/>
+                                <label text="${invoice.notes ?: 'No notes'}"/>
+                            </container>
+
+                            <container style="margin-top: 30px; text-align: center;">
+                                <link url="#" text="Print Invoice" btn-type="primary" icon="fa fa-print"/>
+                                <link url="#" text="Email Invoice" btn-type="info" icon="fa fa-envelope"/>
+                                <link url="#" text="Record Payment" btn-type="success" icon="fa fa-dollar-sign"/>
+                            </container>
+                        </container>
+                    </box-body>
+                </container-box>
+            </row-col>
+
+            <row-col lg="4">
+                <form-single name="UpdateInvoiceForm" map="invoice" transition="updateInvoice">
+                    <field name="invoiceId"><default-field><hidden/></default-field></field>
+                    <field name="statusId">
+                        <default-field title="Status">
+                            <drop-down>
+                                <option key="INV_PENDING" text="Pending"/>
+                                <option key="INV_SENT" text="Sent"/>
+                                <option key="INV_PARTIAL_PAID" text="Partially Paid"/>
+                                <option key="INV_PAID" text="Paid"/>
+                                <option key="INV_PAST_DUE" text="Past Due"/>
+                                <option key="INV_CANCELLED" text="Cancelled"/>
+                            </drop-down>
+                        </default-field>
+                    </field>
+                    <field name="notes"><default-field><text-area rows="4"/></default-field></field>
+                    <field name="submitButton"><default-field title="Update Invoice"><submit/></default-field></field>
+                </form-single>
+            </row-col>
+        </container-row>
+    </widgets>
+</screen>

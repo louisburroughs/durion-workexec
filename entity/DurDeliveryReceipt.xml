@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<entities xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/entity-definition-3.xsd">
+
+    <entity entity-name="DurDeliveryReceipt" package-name="durion.workexec" table-name="DUR_DELIVERY_RECEIPT">
+        <description>Delivery/completion receipt for vehicle or parts</description>
+        <field name="deliveryReceiptId" type="id" is-pk="true"/>
+        <field name="receiptNumber" type="text-short">
+            <description>Human-readable receipt number</description>
+        </field>
+        <field name="workOrderId" type="id" required="true"/>
+        <field name="receiptType" type="text-short" required="true">
+            <description>VEHICLE_DELIVERY, PARTS_RECEIPT</description>
+        </field>
+        <field name="receiptDate" type="date-time" default="ec.user.nowTimestamp"/>
+        <field name="receivedBy" type="id">
+            <description>Person who received vehicle/parts</description>
+        </field>
+        <field name="deliveredBy" type="id">
+            <description>Person who delivered vehicle/parts</description>
+        </field>
+        <field name="vehicleCondition" type="text-short">
+            <description>EXCELLENT, GOOD, FAIR, POOR for vehicle delivery</description>
+        </field>
+        <field name="mileage" type="number-integer"/>
+        <field name="fuelLevel" type="text-short">
+            <description>FULL, 3/4, 1/2, 1/4, EMPTY</description>
+        </field>
+        <field name="customerSignature" type="text-long">
+            <description>Digital signature data</description>
+        </field>
+        <field name="signatureDate" type="date-time"/>
+        <field name="notes" type="text-long"/>
+        <field name="photoUrls" type="text-long">
+            <description>JSON array of photo URLs</description>
+        </field>
+        <field name="createdDate" type="date-time" default="ec.user.nowTimestamp"/>
+        <relationship type="one" related-entity-name="DurWorkOrder" short-alias="workOrder">
+            <key-map field-name="workOrderId" related-field-name="workOrderId"/>
+        </relationship>
+    </entity>
+
+</entities>

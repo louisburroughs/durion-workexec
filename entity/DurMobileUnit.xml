@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<entities xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/entity-definition-3.xsd">
+
+    <entity entity-name="DurMobileUnit" package-name="durion.workexec" table-name="DUR_MOBILE_UNIT">
+        <description>Mobile service vehicle for roadside assistance</description>
+        <field name="mobileUnitId" type="id" is-pk="true"/>
+        <field name="unitNumber" type="text-short" required="true">
+            <description>Vehicle/unit identifier</description>
+        </field>
+        <field name="description" type="text-medium"/>
+        <field name="vehicleVin" type="text-short">
+            <description>VIN of mobile unit vehicle</description>
+        </field>
+        <field name="licensePlate" type="text-short"/>
+        <field name="unitType" type="text-short" default="STANDARD">
+            <description>STANDARD, HEAVY_DUTY, TOW_TRUCK, TIRE_SERVICE</description>
+        </field>
+        <field name="capacity" type="text-short">
+            <description>Service capacity description</description>
+        </field>
+        <field name="equipment" type="text-long">
+            <description>List of onboard equipment and tools</description>
+        </field>
+        <field name="currentMechanicId" type="id">
+            <description>Currently assigned mechanic</description>
+        </field>
+        <field name="currentLatitude" type="number-decimal"/>
+        <field name="currentLongitude" type="number-decimal"/>
+        <field name="lastLocationUpdate" type="date-time"/>
+        <field name="statusId" type="text-short" default="MU_AVAILABLE">
+            <description>MU_AVAILABLE, MU_DISPATCHED, MU_ON_SCENE, MU_RETURNING, MU_OUT_OF_SERVICE</description>
+        </field>
+        <field name="homeLocationId" type="id">
+            <description>Base shop location</description>
+        </field>
+        <field name="mileage" type="number-integer"/>
+        <field name="lastServiceDate" type="date-time">
+            <description>Last service/maintenance date for unit</description>
+        </field>
+        <field name="notes" type="text-long"/>
+        <field name="createdDate" type="date-time" default="ec.user.nowTimestamp"/>
+        <field name="updatedDate" type="date-time" update="ec.user.nowTimestamp"/>
+    </entity>
+
+</entities>

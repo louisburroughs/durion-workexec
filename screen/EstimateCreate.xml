@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<screen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-3.xsd"
+        default-menu-title="Create Estimate" default-menu-index="1">
+
+    <transition name="createEstimate">
+        <service-call name="durion.workexec.create#Estimate"/>
+        <default-response url="../EstimateEdit"><parameter name="estimateId"/></default-response>
+    </transition>
+
+    <actions>
+        <entity-find entity-name="durion.crm.DurCustomer" list="customerList">
+            <order-by field-name="companyName"/>
+        </entity-find>
+    </actions>
+
+    <widgets>
+        <container-row>
+            <row-col lg="8">
+                <form-single name="CreateEstimateForm" transition="createEstimate">
+                    <field name="customerId">
+                        <default-field title="Customer">
+                            <drop-down allow-empty="false">
+                                <list-options list="customerList" key="${customerId}" text="${companyName} (${customerId})"/>
+                            </drop-down>
+                        </default-field>
+                    </field>
+                    <field name="vehicleId">
+                        <default-field title="Vehicle">
+                            <drop-down allow-empty="false">
+                                <dynamic-options transition="getCustomerVehicles" depends-optional="customerId">
+                                    <depends-on field="customerId"/>
+                                </dynamic-options>
+                            </drop-down>
+                        </default-field>
+                    </field>
+                    <field name="description">
+                        <default-field><text-area rows="4"/></default-field>
+                    </field>
+                    <field name="expirationDays">
+                        <default-field title="Valid For (Days)"><text-line size="10" default-value="30"/></default-field>
+                    </field>
+                    <field name="submitButton">
+                        <default-field title="Create Estimate"><submit/></default-field>
+                    </field>
+                </form-single>
+            </row-col>
+        </container-row>
+    </widgets>
+</screen>

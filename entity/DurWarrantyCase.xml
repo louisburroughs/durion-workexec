@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<entities xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/entity-definition-3.xsd">
+
+    <entity entity-name="DurWarrantyCase" package-name="durion.workexec" table-name="DUR_WARRANTY_CASE">
+        <description>Warranty claim tracking</description>
+        <field name="warrantyCaseId" type="id" is-pk="true"/>
+        <field name="caseNumber" type="text-short">
+            <description>Human-readable case number</description>
+        </field>
+        <field name="customerId" type="id" required="true"/>
+        <field name="vehicleId" type="id" required="true"/>
+        <field name="workOrderId" type="id">
+            <description>Link to work order for warranty work</description>
+        </field>
+        <field name="originalWorkOrderId" type="id">
+            <description>Link to original work order being warranted</description>
+        </field>
+        <field name="claimDate" type="date-time" default="ec.user.nowTimestamp"/>
+        <field name="warrantyType" type="text-short" required="true">
+            <description>MANUFACTURER, EXTENDED, SHOP, PARTS</description>
+        </field>
+        <field name="warrantyProvider" type="text-short">
+            <description>Name of warranty provider</description>
+        </field>
+        <field name="providerClaimNumber" type="text-short">
+            <description>Warranty provider's claim reference</description>
+        </field>
+        <field name="description" type="text-long">
+            <description>Description of warranty claim</description>
+        </field>
+        <field name="failureDescription" type="text-long">
+            <description>Details of failure/defect</description>
+        </field>
+        <field name="claimAmount" type="currency-amount"/>
+        <field name="approvedAmount" type="currency-amount"/>
+        <field name="statusId" type="text-short" default="WC_SUBMITTED">
+            <description>WC_SUBMITTED, WC_PENDING, WC_APPROVED, WC_DENIED, WC_PAID, WC_CLOSED</description>
+        </field>
+        <field name="submittedDate" type="date-time"/>
+        <field name="approvedDate" type="date-time"/>
+        <field name="denialReason" type="text-long"/>
+        <field name="paidDate" type="date-time"/>
+        <field name="notes" type="text-long"/>
+        <field name="createdDate" type="date-time" default="ec.user.nowTimestamp"/>
+        <field name="updatedDate" type="date-time" update="ec.user.nowTimestamp"/>
+    </entity>
+
+</entities>

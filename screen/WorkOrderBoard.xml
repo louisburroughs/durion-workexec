@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<screen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-3.xsd"
+        default-menu-title="Work Order Board" default-menu-index="3">
+
+    <transition name="workOrderEdit">
+        <default-response url="../WorkOrderEdit"><parameter name="workOrderId"/></default-response>
+    </transition>
+
+    <transition name="createWorkOrder">
+        <service-call name="durion.workexec.create#WorkOrder"/>
+        <default-response url="../WorkOrderEdit"><parameter name="workOrderId"/></default-response>
+    </transition>
+
+    <actions>
+        <set field="statusFilter" from="statusFilter ?: 'WO_SCHEDULED,WO_IN_PROGRESS'"/>
+        <entity-find entity-name="durion.workexec.DurWorkOrder" list="workOrders">
+            <econditions combine="or">
+                <econdition field-name="statusId" operator="in" from="statusFilter.split(',')"/>
+            </econditions>
+            <order-by field-name="priority"/>
+            <order-by field-name="promisedDate"/>
+        </entity-find>
+
+        <entity-find entity-name="durion.shopmgr.DurShopMechanic" list="mechanics">
+            <order-by field-name="lastName"/>
+        </entity-find>
+
+        <entity-find entity-name="durion.shopmgr.DurShopLocation" list="bays">
+            <econdition field-name="locationType" value="BAY"/>
+            <order-by field-name="locationNumber"/>
+        </entity-find>
+    </actions>
+
+    <widgets>
+        <container-row>
+            <row-col lg="12">
+                <container-box>
+                    <box-header title="Work Order Board - Active Jobs"/>
+                    <box-toolbar>
+                        <link url="createWorkOrder" text="New Work Order" btn-type="success"/>
+                    </box-toolbar>
+                    <box-body>
+                        <form-list name="WorkOrderBoard" list="workOrders" skip-form="true">
+                            <field name="workOrderNumber">
+                                <default-field title="WO #">
+                                    <link url="workOrderEdit" text="${workOrderNumber}" link-type="anchor">
+                                        <parameter name="workOrderId"/>
+                                    </link>
+                                </default-field>
+                            </field>
+                            <field name="customerId">
+                                <default-field title="Customer">
+                                    <display-entity entity-name="durion.crm.DurCustomer" text="${companyName}"/>
+                                </default-field>
+                            </field>
+                            <field name="vehicleId">
+                                <default-field title="Vehicle">
+                                    <display-entity entity-name="durion.crm.DurVehicle" text="${year} ${make} ${model}"/>
+                                </default-field>
+                            </field>
+                            <field name="workOrderType">
+                                <default-field title="Type"><display/></default-field>
+                            </field>
+                            <field name="priority">
+                                <default-field>
+                                    <display also-hidden="false">
+                                        <![CDATA[
+                                        <span class="badge badge-${priority == 'URGENT' ? 'danger' : priority == 'HIGH' ? 'warning' : 'secondary'}">${priority}</span>
+                                        ]]>
+                                    </display>
+                                </default-field>
+                            </field>
+                            <field name="mechanicId">
+                                <default-field title="Mechanic">
+                                    <display-entity entity-name="durion.shopmgr.DurShopMechanic" text="${firstName} ${lastName}"/>
+                                </default-field>
+                            </field>
+                            <field name="bayId">
+                                <default-field title="Bay">
+                                    <display-entity entity-name="durion.shopmgr.DurShopLocation" text="${locationNumber}"/>
+                                </default-field>
+                            </field>
+                            <field name="statusId">
+                                <default-field title="Status">
+                                    <display also-hidden="false">
+                                        <![CDATA[
+                                        <span class="badge badge-${statusId == 'WO_COMPLETED' ? 'success' : statusId == 'WO_IN_PROGRESS' ? 'primary' : 'info'}">${statusId}</span>
+                                        ]]>
+                                    </display>
+                                </default-field>
+                            </field>
+                            <field name="promisedDate">
+                                <default-field title="Promised">
+                                    <display format="MM-dd HH:mm"/>
+                                </default-field>
+                            </field>
+                            <field name="totalAmount">
+                                <default-field title="Total">
+                                    <display format="$#,##0.00"/>
+                                </default-field>
+                            </field>
+                        </form-list>
+                    </box-body>
+                </container-box>
+            </row-col>
+        </container-row>
+    </widgets>
+</screen>

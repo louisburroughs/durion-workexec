@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<screen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-3.xsd"
+        default-menu-title="Work Order" default-menu-index="4">
+
+    <parameter name="workOrderId" required="true"/>
+
+    <transition name="updateWorkOrder">
+        <service-call name="durion.workexec.update#WorkOrder"/>
+        <default-response url="."/>
+    </transition>
+
+    <transition name="addWorkOrderItem">
+        <service-call name="durion.workexec.add#WorkOrderItem"/>
+        <default-response url="."/>
+    </transition>
+
+    <transition name="completeWorkOrder">
+        <service-call name="durion.workexec.complete#WorkOrder"/>
+        <default-response url="."/>
+    </transition>
+
+    <transition name="createInvoice">
+        <service-call name="durion.workexec.create#InvoiceFromWorkOrder"/>
+        <default-response url="../InvoiceView"><parameter name="invoiceId"/></default-response>
+    </transition>
+
+    <actions>
+        <entity-find-one entity-name="durion.workexec.DurWorkOrder" value-field="workOrder"/>
+        <entity-find entity-name="durion.workexec.DurWorkOrderItem" list="workOrderItems">
+            <econdition field-name="workOrderId" from="workOrderId"/>
+            <order-by field-name="itemSeqId"/>
+        </entity-find>
+        <entity-find entity-name="durion.product.DurProduct" list="productList">
+            <order-by field-name="productName"/>
+        </entity-find>
+        <entity-find entity-name="durion.product.DurServiceOperation" list="operationList">
+            <order-by field-name="operationCode"/>
+        </entity-find>
+        <entity-find entity-name="durion.shopmgr.DurShopMechanic" list="mechanicList">
+            <order-by field-name="lastName"/>
+        </entity-find>
+    </actions>
+
+    <widgets>
+        <container-row>
+            <row-col lg="6">
+                <form-single name="WorkOrderForm" map="workOrder" transition="updateWorkOrder">
+                    <field name="workOrderId"><default-field><hidden/></default-field></field>
+                    <field name="workOrderNumber"><default-field title="WO Number"><display/></default-field></field>
+                    <field name="customerId"><default-field title="Customer"><display-entity entity-name="durion.crm.DurCustomer" text="${companyName}"/></default-field></field>
+                    <field name="vehicleId"><default-field title="Vehicle"><display-entity entity-name="durion.crm.DurVehicle" text="${year} ${make} ${model} - ${vin}"/></default-field></field>
+                    <field name="orderDate"><default-field><display format="yyyy-MM-dd HH:mm"/></default-field></field>
+                    <field name="promisedDate"><default-field><date-time type="date-time"/></default-field></field>
+                    <field name="mechanicId">
+                        <default-field title="Assigned Mechanic">
+                            <drop-down allow-empty="true">
+                                <list-options list="mechanicList" key="${mechanicId}" text="${firstName} ${lastName}"/>
+                            </drop-down>
+                        </default-field>
+                    </field>
+                    <field name="workOrderType"><default-field><display/></default-field></field>
+                    <field name="priority">
+                        <default-field>
+                            <drop-down>
+                                <option key="LOW" text="Low"/>
+                                <option key="NORMAL" text="Normal"/>
+                                <option key="HIGH" text="High"/>
+                                <option key="URGENT" text="Urgent"/>
+                            </drop-down>
+                        </default-field>
+                    </field>
+                    <field name="statusId"><default-field title="Status"><display/></default-field></field>
+                    <field name="customerComplaint"><default-field><text-area rows="3"/></default-field></field>
+                    <field name="technicianNotes"><default-field><text-area rows="3"/></default-field></field>
+                    <field name="mileageIn"><default-field title="Mileage In"><text-line size="10"/></default-field></field>
+                    <field name="mileageOut"><default-field title="Mileage Out"><text-line size="10"/></default-field></field>
+                    <field name="totalAmount"><default-field><display format="$#,##0.00"/></default-field></field>
+                    <field name="submitButton"><default-field title="Update"><submit/></default-field></field>
+                </form-single>
+
+                <container-box>
+                    <box-header title="Actions"/>
+                    <box-body>
+                        <container>
+                            <link url="completeWorkOrder" text="Complete Work Order" 
+                                  condition="workOrder.statusId == 'WO_IN_PROGRESS'"
+                                  btn-type="success" parameter-map="[workOrderId: workOrderId]"/>
+                            <link url="createInvoice" text="Create Invoice" 
+                                  condition="workOrder.statusId == 'WO_COMPLETED'"
+                                  btn-type="primary" parameter-map="[workOrderId: workOrderId]"/>
+                        </container>
+                    </box-body>
+                </container-box>
+            </row-col>
+
+            <row-col lg="6">
+                <container-box>
+                    <box-header title="Add Line Item"/>
+                    <box-body>
+                        <form-single name="AddItemForm" transition="addWorkOrderItem">
+                            <field name="workOrderId"><default-field><hidden default-value="${workOrderId}"/></default-field></field>
+                            <field name="itemType">
+                                <default-field>
+                                    <radio no-current-selected-key="PART">
+                                        <option key="PART" text="Part"/>
+                                        <option key="LABOR" text="Labor"/>
+                                        <option key="SERVICE" text="Service"/>
+                                        <option key="SUBLET" text="Sublet"/>
+                                        <option key="FEE" text="Fee"/>
+                                        <option key="DISCOUNT" text="Discount"/>
+                                    </radio>
+                                </default-field>
+                            </field>
+                            <field name="productId">
+                                <default-field title="Product">
+                                    <drop-down allow-empty="true">
+                                        <list-options list="productList" key="${productId}" text="${productName} - ${sku}"/>
+                                    </drop-down>
+                                </default-field>
+                            </field>
+                            <field name="operationId">
+                                <default-field title="Operation">
+                                    <drop-down allow-empty="true">
+                                        <list-options list="operationList" key="${operationId}" text="${operationCode} - ${operationName}"/>
+                                    </drop-down>
+                                </default-field>
+                            </field>
+                            <field name="description"><default-field><text-line size="50"/></default-field></field>
+                            <field name="quantity"><default-field><text-line size="10" default-value="1"/></default-field></field>
+                            <field name="unitPrice"><default-field title="Unit Price"><text-line size="15"/></default-field></field>
+                            <field name="mechanicId">
+                                <default-field title="Mechanic">
+                                    <drop-down allow-empty="true">
+                                        <list-options list="mechanicList" key="${mechanicId}" text="${firstName} ${lastName}"/>
+                                    </drop-down>
+                                </default-field>
+                            </field>
+                            <field name="taxable">
+                                <default-field><check><option key="Y" text="Taxable"/></check></default-field>
+                            </field>
+                            <field name="submitButton"><default-field title="Add Item"><submit/></default-field></field>
+                        </form-single>
+                    </box-body>
+                </container-box>
+
+                <form-list name="WorkOrderItemsList" list="workOrderItems">
+                    <field name="itemSeqId"><default-field title="Line"><display/></default-field></field>
+                    <field name="itemType"><default-field title="Type"><display/></default-field></field>
+                    <field name="description"><default-field><display/></default-field></field>
+                    <field name="quantity"><default-field><display format="#,##0.00"/></default-field></field>
+                    <field name="unitPrice"><default-field title="Price"><display format="$#,##0.00"/></default-field></field>
+                    <field name="lineTotal"><default-field title="Total"><display format="$#,##0.00"/></default-field></field>
+                    <field name="mechanicId">
+                        <default-field title="Mechanic">
+                            <display-entity entity-name="durion.shopmgr.DurShopMechanic" text="${firstName} ${lastName}"/>
+                        </default-field>
+                    </field>
+                    <field name="statusId"><default-field title="Status"><display/></default-field></field>
+                </form-list>
+
+                <container style="margin-top: 20px; padding: 10px; background-color: #f8f9fa; border-radius: 5px;">
+                    <label text="Labor Total: $${ec.l10n.format(workOrder.totalLabor, '#,##0.00')}" style="font-weight: bold;"/>
+                    <label text="Parts Total: $${ec.l10n.format(workOrder.totalParts, '#,##0.00')}" style="font-weight: bold;"/>
+                    <label text="Tax: $${ec.l10n.format(workOrder.totalTax, '#,##0.00')}" style="font-weight: bold;"/>
+                    <label text="Grand Total: $${ec.l10n.format(workOrder.totalAmount, '#,##0.00')}" 
+                           style="font-size: 1.2em; font-weight: bold; color: #28a745;"/>
+                </container>
+            </row-col>
+        </container-row>
+    </widgets>
+</screen>

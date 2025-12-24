@@ -2,9 +2,13 @@
 <component xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/moqui-conf-3.xsd"
            name="durion-workexec" version="1.0.0">
-    <description>Durion Workexec - Work Execution and Scheduling</description>
-    <depends-on name="durion-product"/>
-    <depends-on name="durion-inventory"/>
+    <description>Durion Work Execution - Work orders, estimates, invoicing, warranty tracking, and roadside dispatch</description>
+    
+    <!-- Component Dependencies -->
     <depends-on name="durion-common"/>
+    <depends-on name="durion-crm"/>
+    <depends-on name="durion-product"/>
+    <depends-on name="durion-shopmgr"/>
+    <depends-on name="durion-inventory"/>
     <depends-on name="HiveMind"/>
 </component>

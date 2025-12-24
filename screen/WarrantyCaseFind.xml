@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<screen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-3.xsd"
+        default-menu-title="Warranty Cases" default-menu-index="6">
+
+    <transition name="warrantyCaseEdit">
+        <default-response url="../WarrantyCaseEdit"><parameter name="warrantyCaseId"/></default-response>
+    </transition>
+
+    <transition name="createWarrantyCase">
+        <default-response url="../WarrantyCaseCreate"/>
+    </transition>
+
+    <actions>
+        <set field="statusFilter" from="statusFilter ?: 'WC_SUBMITTED,WC_PENDING'"/>
+        <entity-find entity-name="durion.workexec.DurWarrantyCase" list="warrantyCases">
+            <econditions combine="or">
+                <econdition field-name="statusId" operator="in" from="statusFilter.split(',')"/>
+            </econditions>
+            <order-by field-name="-claimDate"/>
+        </entity-find>
+    </actions>
+
+    <widgets>
+        <container-row>
+            <row-col lg="12">
+                <container-box>
+                    <box-header title="Warranty Cases"/>
+                    <box-toolbar>
+                        <link url="createWarrantyCase" text="New Warranty Case" btn-type="success"/>
+                    </box-toolbar>
+                    <box-body>
+                        <form-list name="WarrantyCasesList" list="warrantyCases" skip-form="true">
+                            <field name="caseNumber">
+                                <default-field title="Case #">
+                                    <link url="warrantyCaseEdit" text="${caseNumber}" link-type="anchor">
+                                        <parameter name="warrantyCaseId"/>
+                                    </link>
+                                </default-field>
+                            </field>
+                            <field name="customerId">
+                                <default-field title="Customer">
+                                    <display-entity entity-name="durion.crm.DurCustomer" text="${companyName}"/>
+                                </default-field>
+                            </field>
+                            <field name="vehicleId">
+                                <default-field title="Vehicle">
+                                    <display-entity entity-name="durion.crm.DurVehicle" text="${year} ${make} ${model}"/>
+                                </default-field>
+                            </field>
+                            <field name="warrantyType">
+                                <default-field title="Type"><display/></default-field>
+                            </field>
+                            <field name="warrantyProvider">
+                                <default-field title="Provider"><display/></default-field>
+                            </field>
+                            <field name="claimDate">
+                                <default-field title="Claim Date">
+                                    <display format="yyyy-MM-dd"/>
+                                </default-field>
+                            </field>
+                            <field name="claimAmount">
+                                <default-field title="Claim Amount">
+                                    <display format="$#,##0.00"/>
+                                </default-field>
+                            </field>
+                            <field name="approvedAmount">
+                                <default-field title="Approved">
+                                    <display format="$#,##0.00"/>
+                                </default-field>
+                            </field>
+                            <field name="statusId">
+                                <default-field title="Status">
+                                    <display also-hidden="false">
+                                        <![CDATA[
+                                        <span class="badge badge-${statusId == 'WC_APPROVED' ? 'success' : statusId == 'WC_DENIED' ? 'danger' : 'warning'}">${statusId}</span>
+                                        ]]>
+                                    </display>
+                                </default-field>
+                            </field>
+                        </form-list>
+                    </box-body>
+                </container-box>
+            </row-col>
+        </container-row>
+    </widgets>
+</screen>

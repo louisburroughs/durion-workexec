@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<entities xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/entity-definition-3.xsd">
+
+    <entity entity-name="DurInvoice" package-name="durion.workexec" table-name="DUR_INVOICE">
+        <description>Customer invoice for completed work</description>
+        <field name="invoiceId" type="id" is-pk="true"/>
+        <field name="invoiceNumber" type="text-short">
+            <description>Human-readable invoice number</description>
+        </field>
+        <field name="workOrderId" type="id" required="true"/>
+        <field name="customerId" type="id" required="true"/>
+        <field name="invoiceDate" type="date-time" default="ec.user.nowTimestamp"/>
+        <field name="dueDate" type="date-time">
+            <description>Payment due date</description>
+        </field>
+        <field name="subtotal" type="currency-amount"/>
+        <field name="taxAmount" type="currency-amount"/>
+        <field name="totalAmount" type="currency-amount"/>
+        <field name="amountPaid" type="currency-amount" default="0"/>
+        <field name="balanceDue" type="currency-amount">
+            <description>totalAmount - amountPaid</description>
+        </field>
+        <field name="statusId" type="text-short" default="INV_PENDING">
+            <description>INV_PENDING, INV_SENT, INV_PARTIAL_PAID, INV_PAID, INV_PAST_DUE, INV_CANCELLED</description>
+        </field>
+        <field name="paymentTerms" type="text-short" default="NET30">
+            <description>NET30, NET15, COD, etc.</description>
+        </field>
+        <field name="notes" type="text-long"/>
+        <field name="createdDate" type="date-time" default="ec.user.nowTimestamp"/>
+        <field name="updatedDate" type="date-time" update="ec.user.nowTimestamp"/>
+        <relationship type="one" related-entity-name="DurWorkOrder" short-alias="workOrder">
+            <key-map field-name="workOrderId" related-field-name="workOrderId"/>
+        </relationship>
+    </entity>
+
+</entities>

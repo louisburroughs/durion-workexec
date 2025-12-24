@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<services xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/service-definition-3.xsd">
+
+    <!-- ====== Work Order Services ====== -->
+    <service verb="create" noun="WorkOrder" type="inline">
+        <in-parameters>
+            <parameter name="customerId" required="true"/>
+            <parameter name="vehicleId" required="true"/>
+            <parameter name="estimateId"/>
+            <parameter name="appointmentId"/>
+            <parameter name="workOrderType" default-value="SHOP"/>
+            <parameter name="priority" default-value="NORMAL"/>
+            <parameter name="customerComplaint"/>
+            <parameter name="mileageIn" type="Integer"/>
+        </in-parameters>
+        <out-parameters>
+            <parameter name="workOrderId"/>
+        </out-parameters>
+        <actions>
+            <service-call name="create#durion.workexec.DurWorkOrder" in-map="context" out-map="context"/>
+            <set field="workOrderNumber" from="'WO-' + workOrderId"/>
+            <service-call name="update#durion.workexec.DurWorkOrder" in-map="context"/>
+        </actions>
+    </service>
+
+    <service verb="update" noun="WorkOrder" type="inline">
+        <in-parameters>
+            <parameter name="workOrderId" required="true"/>
+            <parameter name="statusId"/>
+            <parameter name="mechanicId"/>
+            <parameter name="bayId"/>
+            <parameter name="technicianNotes"/>
+            <parameter name="mileageOut" type="Integer"/>
+            <parameter name="actualCompletionDate" type="Timestamp"/>
+        </in-parameters>
+        <actions>
+            <service-call name="update#durion.workexec.DurWorkOrder" in-map="context"/>
+        </actions>
+    </service>
+
+    <service verb="add" noun="WorkOrderItem" type="inline">
+        <in-parameters>
+            <parameter name="workOrderId" required="true"/>
+            <parameter name="itemType" required="true"/>
+            <parameter name="productId"/>
+            <parameter name="operationId"/>
+            <parameter name="description" required="true"/>
+            <parameter name="quantity" type="BigDecimal" default-value="1"/>
+            <parameter name="unitPrice" type="BigDecimal" required="true"/>
+            <parameter name="mechanicId"/>
+            <parameter name="taxable" default-value="Y"/>
+        </in-parameters>
+        <out-parameters>
+            <parameter name="workOrderItemId"/>
+        </out-parameters>
+        <actions>
+            <entity-find-count entity-name="durion.workexec.DurWorkOrderItem" count-field="itemCount">
+                <econdition field-name="workOrderId" from="workOrderId"/>
+            </entity-find-count>
+            <set field="itemSeqId" from="(itemCount + 1).toString().padLeft(3, '0')"/>
+            <set field="lineTotal" from="quantity * unitPrice"/>
+            <service-call name="create#durion.workexec.DurWorkOrderItem" in-map="context" out-map="context"/>
+            <script>durion.workexec.DurWorkExecServices.calculateWorkOrderTotals(ec, workOrderId)</script>
+        </actions>
+    </service>
+
+    <service verb="complete" noun="WorkOrder" type="inline">
+        <in-parameters>
+            <parameter name="workOrderId" required="true"/>
+            <parameter name="mileageOut" type="Integer"/>
+            <parameter name="technicianNotes"/>
+        </in-parameters>
+        <actions>
+            <set field="statusId" value="WO_COMPLETED"/>
+            <set field="actualCompletionDate" from="ec.user.nowTimestamp"/>
+            <service-call name="update#durion.workexec.DurWorkOrder" in-map="context"/>
+        </actions>
+    </service>
+
+    <!-- ====== Estimate Services ====== -->
+    <service verb="create" noun="Estimate" type="inline">
+        <in-parameters>
+            <parameter name="customerId" required="true"/>
+            <parameter name="vehicleId" required="true"/>
+            <parameter name="description"/>
+            <parameter name="expirationDays" type="Integer" default-value="30"/>
+        </in-parameters>
+        <out-parameters>
+            <parameter name="estimateId"/>
+        </out-parameters>
+        <actions>
+            <set field="expirationDate" from="ec.user.nowTimestamp + (expirationDays * 86400000L)"/>
+            <service-call name="create#durion.workexec.DurEstimate" in-map="context" out-map="context"/>
+            <set field="estimateNumber" from="'EST-' + estimateId"/>
+            <service-call name="update#durion.workexec.DurEstimate" in-map="context"/>
+        </actions>
+    </service>
+
+    <service verb="add" noun="EstimateItem" type="inline">
+        <in-parameters>
+            <parameter name="estimateId" required="true"/>
+            <parameter name="itemType" required="true"/>
+            <parameter name="productId"/>
+            <parameter name="operationId"/>
+            <parameter name="description" required="true"/>
+            <parameter name="quantity" type="BigDecimal" default-value="1"/>
+            <parameter name="unitPrice" type="BigDecimal" required="true"/>
+            <parameter name="taxable" default-value="Y"/>
+        </in-parameters>
+        <out-parameters>
+            <parameter name="estimateItemId"/>
+        </out-parameters>
+        <actions>
+            <entity-find-count entity-name="durion.workexec.DurEstimateItem" count-field="itemCount">
+                <econdition field-name="estimateId" from="estimateId"/>
+            </entity-find-count>
+            <set field="itemSeqId" from="(itemCount + 1).toString().padLeft(3, '0')"/>
+            <set field="lineTotal" from="quantity * unitPrice"/>
+            <service-call name="create#durion.workexec.DurEstimateItem" in-map="context" out-map="context"/>
+            <script>durion.workexec.DurWorkExecServices.calculateEstimateTotals(ec, estimateId)</script>
+        </actions>
+    </service>
+
+    <service verb="approve" noun="Estimate" type="inline">
+        <in-parameters>
+            <parameter name="estimateId" required="true"/>
+            <parameter name="approvedBy"/>
+        </in-parameters>
+        <actions>
+            <set field="statusId" value="EST_APPROVED"/>
+            <set field="approvedDate" from="ec.user.nowTimestamp"/>
+            <service-call name="update#durion.workexec.DurEstimate" in-map="context"/>
+        </actions>
+    </service>
+
+    <service verb="convert" noun="EstimateToWorkOrder" type="inline">
+        <in-parameters>
+            <parameter name="estimateId" required="true"/>
+        </in-parameters>
+        <out-parameters>
+            <parameter name="workOrderId"/>
+        </out-parameters>
+        <actions>
+            <entity-find-one entity-name="durion.workexec.DurEstimate" value-field="estimate"/>
+            <service-call name="durion.workexec.create#WorkOrder" 
+                in-map="[customerId: estimate.customerId, vehicleId: estimate.vehicleId, estimateId: estimateId]" 
+                out-map="context"/>
+            <entity-find entity-name="durion.workexec.DurEstimateItem" list="estimateItems">
+                <econdition field-name="estimateId" from="estimateId"/>
+            </entity-find>
+            <iterate list="estimateItems" entry="item">
+                <service-call name="durion.workexec.add#WorkOrderItem" 
+                    in-map="[workOrderId: workOrderId, itemType: item.itemType, productId: item.productId, 
+                             operationId: item.operationId, description: item.description, 
+                             quantity: item.quantity, unitPrice: item.unitPrice, taxable: item.taxable]"/>
+            </iterate>
+            <set field="workOrderId" from="workOrderId"/>
+            <service-call name="update#durion.workexec.DurEstimate" in-map="[estimateId: estimateId, workOrderId: workOrderId]"/>
+        </actions>
+    </service>
+
+    <!-- ====== Invoice Services ====== -->
+    <service verb="create" noun="InvoiceFromWorkOrder" type="inline">
+        <in-parameters>
+            <parameter name="workOrderId" required="true"/>
+            <parameter name="paymentTerms" default-value="NET30"/>
+        </in-parameters>
+        <out-parameters>
+            <parameter name="invoiceId"/>
+        </out-parameters>
+        <actions>
+            <entity-find-one entity-name="durion.workexec.DurWorkOrder" value-field="workOrder"/>
+            <set field="customerId" from="workOrder.customerId"/>
+            <set field="subtotal" from="workOrder.totalLabor + workOrder.totalParts"/>
+            <set field="taxAmount" from="workOrder.totalTax"/>
+            <set field="totalAmount" from="workOrder.totalAmount"/>
+            <set field="dueDate" from="ec.user.nowTimestamp + (30 * 86400000L)"/>
+            <service-call name="create#durion.workexec.DurInvoice" in-map="context" out-map="context"/>
+            <set field="invoiceNumber" from="'INV-' + invoiceId"/>
+            <set field="balanceDue" from="totalAmount"/>
+            <service-call name="update#durion.workexec.DurInvoice" in-map="context"/>
+            <service-call name="update#durion.workexec.DurWorkOrder" 
+                in-map="[workOrderId: workOrderId, statusId: 'WO_INVOICED']"/>
+        </actions>
+    </service>
+
+    <!-- ====== Warranty Services ====== -->
+    <service verb="create" noun="WarrantyCase" type="inline">
+        <in-parameters>
+            <parameter name="customerId" required="true"/>
+            <parameter name="vehicleId" required="true"/>
+            <parameter name="workOrderId"/>
+            <parameter name="originalWorkOrderId"/>
+            <parameter name="warrantyType" required="true"/>
+            <parameter name="warrantyProvider"/>
+            <parameter name="description" required="true"/>
+            <parameter name="failureDescription"/>
+            <parameter name="claimAmount" type="BigDecimal"/>
+        </in-parameters>
+        <out-parameters>
+            <parameter name="warrantyCaseId"/>
+        </out-parameters>
+        <actions>
+            <service-call name="create#durion.workexec.DurWarrantyCase" in-map="context" out-map="context"/>
+            <set field="caseNumber" from="'WC-' + warrantyCaseId"/>
+            <service-call name="update#durion.workexec.DurWarrantyCase" in-map="context"/>
+        </actions>
+    </service>
+
+    <service verb="update" noun="WarrantyCase" type="inline">
+        <in-parameters>
+            <parameter name="warrantyCaseId" required="true"/>
+            <parameter name="statusId"/>
+            <parameter name="approvedAmount" type="BigDecimal"/>
+            <parameter name="denialReason"/>
+            <parameter name="providerClaimNumber"/>
+        </in-parameters>
+        <actions>
+            <service-call name="update#durion.workexec.DurWarrantyCase" in-map="context"/>
+        </actions>
+    </service>
+
+    <!-- ====== Mobile Unit Services ====== -->
+    <service verb="dispatch" noun="MobileUnit" type="inline">
+        <in-parameters>
+            <parameter name="mobileUnitId" required="true"/>
+            <parameter name="workOrderId" required="true"/>
+            <parameter name="mechanicId" required="true"/>
+        </in-parameters>
+        <actions>
+            <set field="statusId" value="MU_DISPATCHED"/>
+            <set field="currentMechanicId" from="mechanicId"/>
+            <service-call name="update#durion.workexec.DurMobileUnit" in-map="context"/>
+            <service-call name="update#durion.workexec.DurWorkOrder" 
+                in-map="[workOrderId: workOrderId, mobileUnitId: mobileUnitId, mechanicId: mechanicId, statusId: 'WO_IN_PROGRESS']"/>
+        </actions>
+    </service>
+
+    <service verb="update" noun="MobileUnitLocation" type="inline">
+        <in-parameters>
+            <parameter name="mobileUnitId" required="true"/>
+            <parameter name="currentLatitude" type="BigDecimal" required="true"/>
+            <parameter name="currentLongitude" type="BigDecimal" required="true"/>
+        </in-parameters>
+        <actions>
+            <set field="lastLocationUpdate" from="ec.user.nowTimestamp"/>
+            <service-call name="update#durion.workexec.DurMobileUnit" in-map="context"/>
+        </actions>
+    </service>
+
+    <!-- ====== Delivery Receipt Services ====== -->
+    <service verb="create" noun="DeliveryReceipt" type="inline">
+        <in-parameters>
+            <parameter name="workOrderId" required="true"/>
+            <parameter name="receiptType" required="true"/>
+            <parameter name="receivedBy"/>
+            <parameter name="deliveredBy"/>
+            <parameter name="vehicleCondition"/>
+            <parameter name="mileage" type="Integer"/>
+            <parameter name="fuelLevel"/>
+            <parameter name="customerSignature"/>
+            <parameter name="notes"/>
+        </in-parameters>
+        <out-parameters>
+            <parameter name="deliveryReceiptId"/>
+        </out-parameters>
+        <actions>
+            <service-call name="create#durion.workexec.DurDeliveryReceipt" in-map="context" out-map="context"/>
+            <set field="receiptNumber" from="'DR-' + deliveryReceiptId"/>
+            <if condition="customerSignature">
+                <set field="signatureDate" from="ec.user.nowTimestamp"/>
+            </if>
+            <service-call name="update#durion.workexec.DurDeliveryReceipt" in-map="context"/>
+        </actions>
+    </service>
+
+</services>
