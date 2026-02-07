@@ -275,24 +275,30 @@
                 }
             }
 
+            String normalizeGatewayUrl(String configuredGatewayUrl) {
+                String gatewayUrl = configuredGatewayUrl
+                while (gatewayUrl.endsWith('/')) {
+                    gatewayUrl = gatewayUrl.substring(0, gatewayUrl.length() - 1)
+                }
+
+                List<String> knownServicePrefixes = [
+                        'accounting', 'catalog', 'customer', 'inventory', 'invoice', 'inquiry', 'location',
+                        'order', 'people', 'price', 'shop-manager', 'workorder', 'image', 'security-service',
+                        'event-receiver', 'vehicle-fitment', 'vehicle-inventory'
+                ]
+                for (String prefix : knownServicePrefixes) {
+                    if (gatewayUrl.endsWith('/' + prefix)) {
+                        gatewayUrl = gatewayUrl.substring(0, gatewayUrl.length() - prefix.length() - 1)
+                        break
+                    }
+                }
+                return gatewayUrl
+            }
+
             String configuredGatewayUrl = System.getProperty('pos.gateway.url',
                     System.getenv('POS_GATEWAY_URL') ?: 'http://localhost:8080')
 
-            String gatewayUrl = configuredGatewayUrl
-            while (gatewayUrl.endsWith('/')) gatewayUrl = gatewayUrl.substring(0, gatewayUrl.length() - 1)
-
-            List<String> knownServicePrefixes = [
-                    'accounting', 'catalog', 'customer', 'inventory', 'invoice', 'inquiry', 'location',
-                    'order', 'people', 'price', 'shop-manager', 'workorder', 'image', 'security-service',
-                    'event-receiver', 'vehicle-fitment', 'vehicle-inventory'
-            ]
-            for (String prefix : knownServicePrefixes) {
-                if (gatewayUrl.endsWith('/' + prefix)) {
-                    gatewayUrl = gatewayUrl.substring(0, gatewayUrl.length() - prefix.length() - 1)
-                    break
-                }
-            }
-
+            String gatewayUrl = normalizeGatewayUrl(configuredGatewayUrl)
             String workorderBaseUrl = gatewayUrl + '/workorder'
             String jwtToken = ec.user.getLoginToken()
             String requestIdempotencyKey = (idempotencyKey ?: UUID.randomUUID().toString())
