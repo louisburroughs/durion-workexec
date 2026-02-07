@@ -140,26 +140,41 @@
             <script><![CDATA[
             import org.moqui.util.RestClient
 
+            /**
+             * Normalize the gateway URL and strip any known service prefix.
+             *
+             * - Removes trailing slashes.
+             * - Strips a trailing known service path segment (e.g., "/workorder").
+             */
+            String normalizeGatewayUrl(String rawUrl) {
+                if (!rawUrl) return rawUrl
+
+                String gatewayUrl = rawUrl
+                while (gatewayUrl.endsWith('/')) {
+                    gatewayUrl = gatewayUrl.substring(0, gatewayUrl.length() - 1)
+                }
+
+                // Support deployments that (incorrectly) set POS_GATEWAY_URL to a service-prefixed path
+                // such as http://host:8080/workorder by stripping known prefixes.
+                List<String> knownServicePrefixes = [
+                        'accounting', 'catalog', 'customer', 'inventory', 'invoice', 'inquiry', 'location',
+                        'order', 'people', 'price', 'shop-manager', 'workorder', 'image', 'security-service',
+                        'event-receiver', 'vehicle-fitment', 'vehicle-inventory'
+                ]
+                for (String prefix : knownServicePrefixes) {
+                    if (gatewayUrl.endsWith('/' + prefix)) {
+                        gatewayUrl = gatewayUrl.substring(0, gatewayUrl.length() - prefix.length() - 1)
+                        break
+                    }
+                }
+
+                return gatewayUrl
+            }
+
             String configuredGatewayUrl = System.getProperty('pos.gateway.url',
                     System.getenv('POS_GATEWAY_URL') ?: 'http://localhost:8080')
 
-            String gatewayUrl = configuredGatewayUrl
-            while (gatewayUrl.endsWith('/')) gatewayUrl = gatewayUrl.substring(0, gatewayUrl.length() - 1)
-
-            // Support deployments that (incorrectly) set POS_GATEWAY_URL to a service-prefixed path
-            // such as http://host:8080/workorder by stripping known prefixes.
-            List<String> knownServicePrefixes = [
-                    'accounting', 'catalog', 'customer', 'inventory', 'invoice', 'inquiry', 'location',
-                    'order', 'people', 'price', 'shop-manager', 'workorder', 'image', 'security-service',
-                    'event-receiver', 'vehicle-fitment', 'vehicle-inventory'
-            ]
-            for (String prefix : knownServicePrefixes) {
-                if (gatewayUrl.endsWith('/' + prefix)) {
-                    gatewayUrl = gatewayUrl.substring(0, gatewayUrl.length() - prefix.length() - 1)
-                    break
-                }
-            }
-
+            String gatewayUrl = normalizeGatewayUrl(configuredGatewayUrl)
             String customerBaseUrl = gatewayUrl + '/customer'
             String jwtToken = ec.user.getLoginToken()
 
