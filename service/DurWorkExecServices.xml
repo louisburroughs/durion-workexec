@@ -2,7 +2,7 @@
 <services xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/service-definition-3.xsd">
 
-    <!-- ====== Work Order Services ====== -->
+    <!-- ====== Workorder Services ====== -->
     <service verb="create" noun="WorkOrder" type="inline">
         <in-parameters>
             <parameter name="customerId" required="true"/>
@@ -122,15 +122,210 @@
         </actions>
     </service>
 
-    <service verb="approve" noun="Estimate" type="inline">
+    <service verb="get" noun="CustomerBillingRules" type="script">
+        <description>
+            Lookup billing rules for a commercial account via the Customer (CRM facade).
+            Used to determine if a PO number is required for estimate approval (CAP:092).
+
+            Fail-safe behavior: if billing rules are unavailable (timeout/5xx/exception),
+            this service returns purchaseOrderRequired=true and billingRulesAvailable=false.
+        </description>
+        <in-parameters>
+            <parameter name="partyId" required="true"/>
+        </in-parameters>
+        <out-parameters>
+            <parameter name="purchaseOrderRequired" type="Boolean"/>
+            <parameter name="billingRulesAvailable" type="Boolean"/>
+        </out-parameters>
+        <actions>
+            <script><![CDATA[
+            import org.moqui.util.RestClient
+
+            String configuredGatewayUrl = System.getProperty('pos.gateway.url',
+                    System.getenv('POS_GATEWAY_URL') ?: 'http://localhost:8080')
+
+            String gatewayUrl = configuredGatewayUrl
+            while (gatewayUrl.endsWith('/')) gatewayUrl = gatewayUrl.substring(0, gatewayUrl.length() - 1)
+
+            // Support deployments that (incorrectly) set POS_GATEWAY_URL to a service-prefixed path
+            // such as http://host:8080/workorder by stripping known prefixes.
+            List<String> knownServicePrefixes = [
+                    'accounting', 'catalog', 'customer', 'inventory', 'invoice', 'inquiry', 'location',
+                    'order', 'people', 'price', 'shop-manager', 'workorder', 'image', 'security-service',
+                    'event-receiver', 'vehicle-fitment', 'vehicle-inventory'
+            ]
+            for (String prefix : knownServicePrefixes) {
+                if (gatewayUrl.endsWith('/' + prefix)) {
+                    gatewayUrl = gatewayUrl.substring(0, gatewayUrl.length() - prefix.length() - 1)
+                    break
+                }
+            }
+
+            String customerBaseUrl = gatewayUrl + '/customer'
+            String jwtToken = ec.user.getLoginToken()
+
+            purchaseOrderRequired = true
+            billingRulesAvailable = false
+
+            try {
+                RestClient restClient = ec.service.rest()
+                        .method('GET')
+                        .uri("${customerBaseUrl}/v1/crm/accounts/parties/${partyId}/billingRules")
+                        .addHeader('Accept', 'application/json')
+                        .addHeader('X-API-Version', '1')
+
+                if (jwtToken) {
+                    restClient.addHeader('Authorization', "Bearer ${jwtToken}")
+                }
+
+                RestClient.RestResponse response = restClient.call()
+
+                if (response.statusCode == 200) {
+                    Map responseBody = (Map) response.jsonObject()
+                    Object value = responseBody?.purchaseOrderRequired
+                    if (value == null && responseBody?.billingRules instanceof Map) {
+                        value = ((Map) responseBody.billingRules).purchaseOrderRequired
+                    }
+
+                    // If response is successful but doesn't include the field, treat as unavailable.
+                    if (value instanceof Boolean) {
+                        purchaseOrderRequired = (Boolean) value
+                        billingRulesAvailable = true
+                    }
+                }
+            } catch (Exception e) {
+                // Fail-safe already set: require PO if rules can't be fetched.
+            }
+        ]]>            </script>
+        </actions>
+    </service>
+
+    <service verb="approve" noun="Estimate" type="script">
         <in-parameters>
             <parameter name="estimateId" required="true"/>
             <parameter name="approvedBy"/>
+            <parameter name="purchaseOrderNumber"/>
+            <parameter name="idempotencyKey"/>
         </in-parameters>
         <actions>
-            <set field="statusId" value="EST_APPROVED"/>
-            <set field="approvedDate" from="ec.user.nowTimestamp"/>
-            <service-call name="update#durion.workexec.DurEstimate" in-map="context"/>
+            <script><![CDATA[
+            import org.moqui.util.RestClient
+            import java.util.UUID
+
+            // Load estimate
+            def estimate = ec.entity.find('durion.workexec.DurEstimate')
+                    .condition('estimateId', estimateId)
+                    .one()
+
+            if (!estimate) {
+                ec.message.addError('Estimate not found')
+                return
+            }
+
+            if (!(estimate.statusId in ['EST_DRAFT', 'EST_SENT'])) {
+                ec.message.addError('Estimate cannot be approved from its current status')
+                return
+            }
+
+            String normalizedPoNumber = purchaseOrderNumber?.toString()?.trim()
+
+            // Determine whether PO is required for this customer
+            Map billingRules = ec.service.sync().name('durion.workexec.get#CustomerBillingRules')
+                    .parameters([partyId: estimate.customerId])
+                    .call() as Map
+
+            boolean poRequired = (billingRules.purchaseOrderRequired == true)
+            boolean rulesAvailable = (billingRules.billingRulesAvailable == true)
+
+            // If rules are unavailable, fail-safe by requiring PO.
+            if (!rulesAvailable) {
+                poRequired = true
+            }
+
+            if (poRequired) {
+                if (!normalizedPoNumber) {
+                    ec.message.addError(rulesAvailable
+                            ? 'Purchase order number is required to approve this estimate.'
+                            : 'Billing rules are unavailable; purchase order number is required to approve this estimate.')
+                    return
+                }
+
+                if (normalizedPoNumber.length() < 3 || normalizedPoNumber.length() > 64) {
+                    ec.message.addError('Purchase order number must be between 3 and 64 characters.')
+                    return
+                }
+
+                if (!(normalizedPoNumber ==~ /^[A-Za-z0-9][A-Za-z0-9._-]*$/)) {
+                    ec.message.addError('Purchase order number contains invalid characters.')
+                    return
+                }
+            }
+
+            String configuredGatewayUrl = System.getProperty('pos.gateway.url',
+                    System.getenv('POS_GATEWAY_URL') ?: 'http://localhost:8080')
+
+            String gatewayUrl = configuredGatewayUrl
+            while (gatewayUrl.endsWith('/')) gatewayUrl = gatewayUrl.substring(0, gatewayUrl.length() - 1)
+
+            List<String> knownServicePrefixes = [
+                    'accounting', 'catalog', 'customer', 'inventory', 'invoice', 'inquiry', 'location',
+                    'order', 'people', 'price', 'shop-manager', 'workorder', 'image', 'security-service',
+                    'event-receiver', 'vehicle-fitment', 'vehicle-inventory'
+            ]
+            for (String prefix : knownServicePrefixes) {
+                if (gatewayUrl.endsWith('/' + prefix)) {
+                    gatewayUrl = gatewayUrl.substring(0, gatewayUrl.length() - prefix.length() - 1)
+                    break
+                }
+            }
+
+            String workorderBaseUrl = gatewayUrl + '/workorder'
+            String jwtToken = ec.user.getLoginToken()
+            String requestIdempotencyKey = (idempotencyKey ?: UUID.randomUUID().toString())
+
+            Map requestBody = [customerId: estimate.customerId]
+            if (normalizedPoNumber) {
+                requestBody.purchaseOrderNumber = normalizedPoNumber
+            }
+
+            RestClient restClient = ec.service.rest()
+                    .method('POST')
+                    .uri("${workorderBaseUrl}/v1/workorders/estimates/${estimateId}/approval")
+                    .addHeader('Content-Type', 'application/json')
+                    .addHeader('Accept', 'application/json')
+                    .addHeader('X-API-Version', '1')
+                    .addHeader('Idempotency-Key', requestIdempotencyKey)
+                    .jsonObject(requestBody)
+
+            if (jwtToken) {
+                restClient.addHeader('Authorization', "Bearer ${jwtToken}")
+            }
+
+            RestClient.RestResponse response = restClient.call()
+
+            if (response.statusCode == 200) {
+                ec.service.sync().name('update#durion.workexec.DurEstimate')
+                        .parameters([
+                                estimateId: estimateId,
+                                statusId: 'EST_APPROVED',
+                                approvedDate: ec.user.nowTimestamp,
+                                approvedBy: (approvedBy ?: ec.user.userId),
+                                purchaseOrderNumber: normalizedPoNumber
+                        ])
+                        .call()
+            } else {
+                String errorMsg = "Failed to approve estimate: ${response.statusCode} ${response.reasonPhrase}"
+                try {
+                    Map errorBody = response.jsonObject() as Map
+                    if (errorBody?.message) errorMsg = errorBody.message
+                } catch (Exception ignored) {
+                    // Ignore parse failures
+                }
+
+                ec.message.addError(errorMsg)
+                return
+            }
+        ]]>            </script>
         </actions>
     </service>
 
